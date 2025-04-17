@@ -1,5 +1,5 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
-import { authAPI } from '../services/api';
+import { authAPI, api } from '../services/api';
 
 interface User {
   _id: string;
@@ -20,22 +20,28 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [user, setUser] = useState<User | null>(null);
-  const [token, setToken] = useState<string | null>(localStorage.getItem('token'));
+  const [token, setToken] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
+
+  const setAuthToken = (token: string | null) => {
+    if (token) {
+      api.defaults.headers.common['Authorization'] = `Bearer ${token}`;
+    } else {
+      delete api.defaults.headers.common['Authorization'];
+    }
+  };
 
   useEffect(() => {
     const initializeAuth = async () => {
       const storedToken = localStorage.getItem('token');
+      const storedUser = localStorage.getItem('user');
+
       if (storedToken) {
-        try {
-          const response = await authAPI.getMe();
-          setUser(response.data.user);
-          setToken(storedToken);
-        } catch (error) {
-          localStorage.removeItem('token');
-          setToken(null);
-          setUser(null);
-        }
+        setAuthToken(storedToken);
+        setToken(storedToken);
+      }
+      if (storedUser) {
+        setUser(JSON.parse(storedUser));
       }
       setLoading(false);
     };
@@ -46,23 +52,29 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const login = async (email: string, password: string) => {
     const response = await authAPI.login(email, password);
     const { user, token } = response.data;
-    setUser(user);
+    localStorage.setItem('token', token); // Store token
+    localStorage.setItem('user', JSON.stringify(user)); // Store user data
+    setAuthToken(token);
     setToken(token);
-    localStorage.setItem('token', token);
+    setUser(user);
   };
 
   const register = async (name: string, email: string, password: string, pan: string) => {
     const response = await authAPI.register(name, email, password, pan);
     const { user, token } = response.data;
-    setUser(user);
+    localStorage.setItem('token', token); // Store token
+    localStorage.setItem('user', JSON.stringify(user)); // Store user data
+    setAuthToken(token);
     setToken(token);
-    localStorage.setItem('token', token);
+    setUser(user);
   };
 
   const logout = () => {
-    setUser(null);
-    setToken(null);
     localStorage.removeItem('token');
+    localStorage.removeItem('user'); // Remove user data
+    setAuthToken(null);
+    setToken(null);
+    setUser(null);
   };
 
   if (loading) {
@@ -82,4 +94,4 @@ export const useAuth = () => {
     throw new Error('useAuth must be used within an AuthProvider');
   }
   return context;
-}; 
+};
