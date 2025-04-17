@@ -1,43 +1,48 @@
+import mongoose from 'mongoose'; // at top
 import { Request, Response } from 'express';
 import { asyncHandler } from '../utils/asyncHandlre';
+import { Holding } from '../models/Holding';
+import { AuthRequest } from '../middleware/authMiddleware';
 
-export const getMFHoldings = asyncHandler(async (req: Request, res: Response) => {
-  const { pan } = req.query;
+export const getMFHoldings = asyncHandler(async (req: AuthRequest, res: Response) => {
+  const pan = req.query.pan as string;
+  const userId = req.user?.id;
+
+  console.log("Userid:", userId, "PAN:", pan);
+
+  if (!userId) {
+    res.status(401);
+    throw new Error('Unauthorized access');
+  }
 
   if (!pan) {
     res.status(400);
     throw new Error('PAN is required');
   }
 
-  // Mock response for the example
+  const holdings = await Holding.find({ 
+    pan: pan 
+  });
+
+  if (!holdings || holdings.length === 0) {
+    res.status(404);
+    throw new Error('No holdings found for the provided PAN');
+  }
+
+  const totalValue = holdings.reduce((acc, holding) => acc + (holding.currentValue || 0), 0);
+
   const data = {
     pan,
-    holdings: [
-      {
-        fund_name: 'Axis Bluechip Fund',
-        category: 'Equity - Large Cap',
-        current_value: 150000,
-        units: 120.5,
-        nav: 1245.80
-      },
-      {
-        fund_name: 'HDFC Short Term Debt Fund',
-        category: 'Debt - Short Duration',
-        current_value: 50000,
-        units: 300.75,
-        nav: 166.20
-      },
-      {
-        fund_name: 'Mirae Asset Emerging Bluechip',
-        category: 'Equity - Mid Cap',
-        current_value: 200000,
-        units: 250.25,
-        nav: 799.30
-      }
-    ],
-    total_value: 400000,
-    last_updated: new Date()
+    holdings: holdings.map(holding => ({
+      fund_name: holding.fundName,
+      category: holding.category,
+      current_value: holding.currentValue,
+      units: holding.units,
+      nav: holding.nav
+    })),
+    total_value: totalValue,
+    last_updated: new Date().toISOString()
   };
 
-  res.json(data);
+  res.status(200).json(data);
 });

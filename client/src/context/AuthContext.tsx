@@ -1,5 +1,5 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
-import axios from 'axios';
+import { authAPI } from '../services/api';
 
 interface User {
   _id: string;
@@ -21,17 +21,30 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [user, setUser] = useState<User | null>(null);
   const [token, setToken] = useState<string | null>(localStorage.getItem('token'));
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    if (token) {
-      axios.defaults.headers.common['Authorization'] = `Bearer ${token}`;
-    } else {
-      delete axios.defaults.headers.common['Authorization'];
-    }
-  }, [token]);
+    const initializeAuth = async () => {
+      const storedToken = localStorage.getItem('token');
+      if (storedToken) {
+        try {
+          const response = await authAPI.getMe();
+          setUser(response.data.user);
+          setToken(storedToken);
+        } catch (error) {
+          localStorage.removeItem('token');
+          setToken(null);
+          setUser(null);
+        }
+      }
+      setLoading(false);
+    };
+
+    initializeAuth();
+  }, []);
 
   const login = async (email: string, password: string) => {
-    const response = await axios.post('http://localhost:5000/api/auth/login', { email, password });
+    const response = await authAPI.login(email, password);
     const { user, token } = response.data;
     setUser(user);
     setToken(token);
@@ -39,7 +52,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   };
 
   const register = async (name: string, email: string, password: string, pan: string) => {
-    const response = await axios.post('http://localhost:5000/api/auth/register', { name, email, password, pan });
+    const response = await authAPI.register(name, email, password, pan);
     const { user, token } = response.data;
     setUser(user);
     setToken(token);
@@ -51,6 +64,10 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     setToken(null);
     localStorage.removeItem('token');
   };
+
+  if (loading) {
+    return <div>Loading...</div>;
+  }
 
   return (
     <AuthContext.Provider value={{ user, token, login, register, logout }}>

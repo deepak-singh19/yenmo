@@ -11,7 +11,7 @@ const errorMiddleware: ErrorRequestHandler = (err, req, res, next) => {
   }
 
   // For unhandled errors
-  console.error('ERROR 💥', err);
+  console.error('ERROR ', err);
   res.status(500).json({
     status: 'error',
     message: 'Something went wrong!'

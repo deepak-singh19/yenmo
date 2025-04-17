@@ -1,9 +1,9 @@
 import express from 'express';
 import { getMFHoldings } from '../controller/mfController';
+import { protect } from '../middleware/authMiddleware';
 
 const router = express.Router();
 
-// Dynamic route with query parameters
-router.get('/', getMFHoldings);
+router.get('/holdings',protect, getMFHoldings);
 
 export default router;

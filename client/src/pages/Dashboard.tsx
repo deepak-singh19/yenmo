@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+import toast from 'react-hot-toast';
 import {
   Container,
   Paper,
@@ -14,20 +15,20 @@ import {
   TableRow,
 } from '@mui/material';
 import { useAuth } from '../context/AuthContext';
-import axios from 'axios';
+import { mfAPI, loanAPI } from '../services/api';
 
 interface MFHolding {
-  fundName: string;
+  fund_name: string;
   category: string;
-  currentValue: number;
+  current_value: number;
   units: number;
   nav: number;
 }
 
 interface EligibilityCheck {
-  eligibleAmount: number;
-  totalMFValue: number;
-  checkDate: string;
+  loan_amount: number;
+  amount: number;
+  date: string;
 }
 
 const Dashboard: React.FC = () => {
@@ -38,6 +39,8 @@ const Dashboard: React.FC = () => {
   const [eligibilityChecks, setEligibilityChecks] = useState<EligibilityCheck[]>([]);
   const [loading, setLoading] = useState(true);
 
+
+  // useEffect(()=>{console.log("MF HO", mfHoldings)},[mfHoldings])
   useEffect(() => {
     if (!user) {
       navigate('/login');
@@ -46,20 +49,17 @@ const Dashboard: React.FC = () => {
 
     const fetchData = async () => {
       try {
-        // Fetch MF holdings
-        const holdingsResponse = await axios.get(
-          `http://localhost:5000/api/mf/holdings?pan=${user.pan}`
-        );
-        setMFHoldings(holdingsResponse.data.holdings);
-        setTotalValue(holdingsResponse.data.totalValue);
+        const [holdingsResponse, historyResponse] = await Promise.all([
+          mfAPI.getHoldings(user.pan),
+          loanAPI.getHistory(user.pan)
+        ]);
 
-        // Fetch eligibility check history
-        const historyResponse = await axios.get(
-          'http://localhost:5000/api/eligibility/history'
-        );
-        setEligibilityChecks(historyResponse.data);
+        setMFHoldings(holdingsResponse.data.holdings);
+        setTotalValue(holdingsResponse.data.total_value);
+        setEligibilityChecks(historyResponse.data.history);
       } catch (error) {
         console.error('Error fetching data:', error);
+        setEligibilityChecks([]);
       } finally {
         setLoading(false);
       }
@@ -70,10 +70,17 @@ const Dashboard: React.FC = () => {
 
   const handleCheckEligibility = async () => {
     try {
-      const response = await axios.post('http://localhost:5000/api/eligibility/check', {
-        pan: user?.pan,
-      });
-      setEligibilityChecks([response.data, ...eligibilityChecks]);
+      const response = await loanAPI.checkEligibility(user?.pan || '');
+      setEligibilityChecks(prevChecks => [...prevChecks, {
+        loan_amount: response.data.loan_amount,
+        amount: totalValue,
+        date: new Date().toISOString()
+      }]);
+      if(response.data.eligible){
+        toast.success(response.data.message);
+      } else {
+        toast.error(response.data.message);
+      }
     } catch (error) {
       console.error('Error checking eligibility:', error);
     }
@@ -116,18 +123,19 @@ const Dashboard: React.FC = () => {
               <TableBody>
                 {mfHoldings.map((holding, index) => (
                   <TableRow key={index}>
-                    <TableCell>{holding.fundName}</TableCell>
+                    <TableCell>{holding.fund_name}</TableCell>
                     <TableCell>{holding.category}</TableCell>
-                    <TableCell>₹{holding.currentValue.toLocaleString()}</TableCell>
+                    <TableCell>₹{holding.current_value
+                    }</TableCell>
                     <TableCell>{holding.units}</TableCell>
-                    <TableCell>₹{holding.nav.toLocaleString()}</TableCell>
+                    <TableCell>₹{holding.nav}</TableCell>
                   </TableRow>
                 ))}
               </TableBody>
             </Table>
           </TableContainer>
           <Typography variant="h6" sx={{ mt: 2 }}>
-            Total Value: ₹{totalValue.toLocaleString()}
+            Total Value: ₹{totalValue}
           </Typography>
         </Paper>
 
@@ -138,26 +146,28 @@ const Dashboard: React.FC = () => {
               Check Eligibility
             </Button>
           </Box>
-          <TableContainer>
-            <Table>
-              <TableHead>
-                <TableRow>
-                  <TableCell>Date</TableCell>
-                  <TableCell>Total MF Value</TableCell>
-                  <TableCell>Eligible Amount</TableCell>
-                </TableRow>
-              </TableHead>
-              <TableBody>
-                {eligibilityChecks.map((check, index) => (
-                  <TableRow key={index}>
-                    <TableCell>{new Date(check.checkDate).toLocaleDateString()}</TableCell>
-                    <TableCell>₹{check.totalMFValue.toLocaleString()}</TableCell>
-                    <TableCell>₹{check.eligibleAmount.toLocaleString()}</TableCell>
+          {eligibilityChecks && eligibilityChecks.length > 0 ? (
+            <TableContainer>
+              <Table>
+                <TableHead>
+                  <TableRow>
+                    <TableCell>Date</TableCell>
+                    <TableCell>Total MF Value</TableCell>
+                    <TableCell>Eligible Amount</TableCell>
                   </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          </TableContainer>
+                </TableHead>
+                <TableBody>
+                  {eligibilityChecks.map((check, index) => (
+                    <TableRow key={index}>
+                      <TableCell>{new Date(check.date).toLocaleDateString()}</TableCell>
+                      <TableCell>₹{(check.amount || 0).toLocaleString()}</TableCell>
+                      <TableCell>₹{(check.loan_amount || 0).toLocaleString()}</TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </TableContainer>
+          ) : null}
         </Paper>
       </Box>
     </Container>

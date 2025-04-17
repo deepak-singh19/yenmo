@@ -7,7 +7,7 @@ import { protect } from '../middleware/authMiddleware';
 const router = express.Router();
 
 
-router.post('/', protect, checkEligibility);
+router.post('/check', protect, checkEligibility);
 
 
 router.get('/history', protect, getHistory);
