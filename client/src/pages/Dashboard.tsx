@@ -14,6 +14,7 @@ import {
   TableHead,
   TableRow,
 } from '@mui/material';
+import CircularProgress from '@mui/material/CircularProgress';
 import { useAuth } from '../context/AuthContext';
 import { mfAPI, loanAPI } from '../services/api';
 
@@ -92,7 +93,11 @@ const Dashboard: React.FC = () => {
   };
 
   if (loading) {
-    return <Typography>Loading...</Typography>;
+    return (
+      <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh' }}>
+      <CircularProgress />
+    </Box>
+    );
   }
 
   return (
