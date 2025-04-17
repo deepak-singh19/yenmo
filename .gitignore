@@ -1,17 +1,31 @@
-# Ignore node_modules for both server and client
+# Ignore node_modules everywhere
 node_modules/
 client/node_modules/
 server/node_modules/
 
-# Ignore build folders
+# Ignore build and dist folders
+build/
 dist/
+client/build/
 client/dist/
 server/dist/
 
-# Environment variables
+# Ignore environment variables
 .env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
 client/.env
+client/.env.local
+client/.env.development.local
+client/.env.test.local
+client/.env.production.local
 server/.env
+server/.env.local
+server/.env.development.local
+server/.env.test.local
+server/.env.production.local
 
 # Logs
 logs/
@@ -19,13 +33,15 @@ logs/
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
-
-# OS files
-.DS_Store
-
-# TypeScript cache
-*.tsbuildinfo
+pnpm-debug.log*
 
 # IDE settings
 .vscode/
 .idea/
+
+# OS system files
+.DS_Store
+Thumbs.db
+
+# Misc
+*.tsbuildinfo
