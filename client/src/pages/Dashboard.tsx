@@ -118,11 +118,11 @@ const Dashboard: React.FC = () => {
             <Table>
               <TableHead>
                 <TableRow>
-                  <TableCell>Fund Name</TableCell>
-                  <TableCell>Category</TableCell>
-                  <TableCell>Current Value</TableCell>
-                  <TableCell>Units</TableCell>
-                  <TableCell>NAV</TableCell>
+                  <TableCell sx={{ fontWeight: 'bold' }} >Fund Name</TableCell>
+                  <TableCell sx={{ fontWeight: 'bold' }} >Category</TableCell>
+                  <TableCell sx={{ fontWeight: 'bold' }} >Current Value</TableCell>
+                  <TableCell sx={{ fontWeight: 'bold' }} >Units</TableCell>
+                  <TableCell sx={{ fontWeight: 'bold' }} >NAV</TableCell>
                 </TableRow>
               </TableHead>
               <TableBody>
@@ -156,9 +156,9 @@ const Dashboard: React.FC = () => {
               <Table>
                 <TableHead>
                   <TableRow>
-                    <TableCell>Date</TableCell>
-                    <TableCell>Total MF Value</TableCell>
-                    <TableCell>Eligible Amount</TableCell>
+                    <TableCell sx={{ fontWeight: 'bold' }} >Date</TableCell>
+                    <TableCell sx={{ fontWeight: 'bold' }} >Total MF Value</TableCell>
+                    <TableCell sx={{ fontWeight: 'bold' }} >Eligible Amount</TableCell>
                   </TableRow>
                 </TableHead>
                 <TableBody>
