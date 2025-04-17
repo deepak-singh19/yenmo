@@ -1,44 +1,57 @@
+
 # Loan Eligibility Checker
 
 A web application that allows users to check their loan eligibility based on their mutual fund holdings.
 
 ## Features
 
-- User authentication (login/register)
+- User authentication (login/register) with JWT
 - PAN-based mutual fund holdings retrieval
 - Loan eligibility calculation (50% of total mutual fund value)
 - History of eligibility checks
-- Responsive UI with Material-UI components
+- Indexes added in MongoDB for faster queries
+- Centralized error handling with `AppError` and `asyncHandler`
+- Auth context (`AuthContext`) to manage authentication state in frontend
+- Token persisted in `localStorage`
+- Service-based API calls (`api.ts`)
+- Responsive UI with Material-UI (MUI) components
+- Automatic dummy Mutual Fund Holdings added for new users on registration
 
 ## Tech Stack
 
 ### Frontend
 - React with TypeScript
-- Material-UI for components
+- Material-UI (MUI) for UI components
 - React Router for navigation
-- Axios for API calls
+- Axios for API calls (via centralized `api.ts`)
+- React Context API for Authentication
 
 ### Backend
 - Node.js with Express
-- MongoDB for database
+- MongoDB with Mongoose
 - JWT for authentication
 - Bcrypt for password hashing
+- Centralized error handling (AppError, asyncHandler)
+- MongoDB Indexes for optimized queries
 
 ## Project Structure
 
 ```
 .
 ├── client/                 # React frontend
-│   ├── src/
-│   │   ├── components/    # Reusable components
-│   │   ├── context/       # React context
-│   │   ├── pages/         # Page components
+│   ├── src/ 
+│   │   ├── context/       # AuthContext
+│   │   ├── pages/         # Dashboard, Login, Register pages
+│   │   ├── services/      # api.ts (centralized API calls)
 │   │   └── App.tsx        # Main app component
 │   └── package.json
 ├── server/                 # Node.js backend
-│   ├── models/            # MongoDB models
-│   ├── routes/            # API routes
-│   ├── middleware/        # Express middleware
+│   ├── config/            # Database connection and environment config
+│   ├── controllers/       # Controller logic
+│   ├── middleware/        # AppError, asyncHandler, protect (JWT middleware)
+│   ├── models/            # MongoDB models (User, Holding, Loan)
+│   ├── routes/            # API routes (authRoutes, mfRoutes, loanRoutes)
+│   ├── utils/             # Utility functions (e.g., generateToken, createDummyHoldings)
 │   └── server.js          # Main server file
 └── README.md
 ```
@@ -66,7 +79,7 @@ A web application that allows users to check their loan eligibility based on the
 
 4. Start the server:
    ```bash
-   npm start
+   npm run dev
    ```
 
 ### Frontend Setup
@@ -83,34 +96,42 @@ A web application that allows users to check their loan eligibility based on the
 
 3. Start the development server:
    ```bash
-   npm start
+   npm run dev
    ```
 
 ## API Endpoints
 
+Base URL: `/api`
+
 ### Authentication
-- POST `/api/auth/register` - Register a new user
-- POST `/api/auth/login` - Login user
+- POST `/auth/register` – Register a new user (adds fake holdings)
+- POST `/auth/login` – Login user
 
 ### Mutual Fund Holdings
-- GET `/api/mf/holdings?pan={pan}` - Get mutual fund holdings by PAN
+- GET `/mf/holdings?pan={pan}` – Get mutual fund holdings by PAN
 
 ### Loan Eligibility
-- POST `/api/eligibility/check` - Check loan eligibility
-- GET `/api/eligibility/history` - Get eligibility check history
+- POST `/loans/check` – Check loan eligibility
+- GET `/loans/history` – Get eligibility check history
 
-## Security Features
+## Security and Optimization Features
 
 - Password hashing with bcrypt
 - JWT-based authentication
-- Protected API routes
-- Input validation
-- Error handling
+- Protected API routes with middleware
+- Centralized async error handling
+- MongoDB indexes for query optimization
+- Input validation and sanitization
+
+## How Registration Works
+
+- On registering a new user, random dummy Mutual Fund Holdings data is automatically created and linked with the user's PAN.
+- This allows users to immediately test loan eligibility without manually adding holdings.
 
 ## Contributing
 
 1. Fork the repository
-2. Create your feature branch (`git checkout -b feature/amazing-feature`)
-3. Commit your changes (`git commit -m 'Add some amazing feature'`)
-4. Push to the branch (`git push origin feature/amazing-feature`)
-5. Open a Pull Request 
+2. Create your feature branch (`git checkout -b feature/awesome-feature`)
+3. Commit your changes (`git commit -m 'Add some awesome feature'`)
+4. Push to the branch (`git push origin feature/awesome-feature`)
+5. Open a Pull Request
